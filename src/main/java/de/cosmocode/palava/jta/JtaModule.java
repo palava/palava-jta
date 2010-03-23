@@ -28,8 +28,8 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Tobias Sarnowski
  */
-public class InfinispanJtaModule implements Module {
-    private static final Logger LOG = LoggerFactory.getLogger(InfinispanJtaModule.class);
+public class JtaModule implements Module {
+    private static final Logger LOG = LoggerFactory.getLogger(JtaModule.class);
 
     @Override
     public void configure(Binder binder) {

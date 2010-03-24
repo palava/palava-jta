@@ -20,22 +20,35 @@
 
 package de.cosmocode.palava.jta;
 
-import com.google.inject.Binder;
-import com.google.inject.Module;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.naming.Context;
+import javax.naming.NamingException;
 import javax.transaction.UserTransaction;
 
 /**
  * @author Tobias Sarnowski
  */
-public class JtaModule implements Module {
-    private static final Logger LOG = LoggerFactory.getLogger(JtaModule.class);
+final class UserTransactionProvider implements Provider<UserTransaction> {
+    private static final Logger LOG = LoggerFactory.getLogger(UserTransactionProvider.class);
+    private Provider<Context> contextProvider;
+
+    @Inject
+    public UserTransactionProvider(Provider<Context> contextProvider) {
+        this.contextProvider = contextProvider;
+    }
+
 
     @Override
-    public void configure(Binder binder) {
-        binder.bind(InfinispanJtaProvider.class).asEagerSingleton();
-        binder.bind(UserTransaction.class).toProvider(UserTransactionProvider.class);
+    public UserTransaction get() {
+        Context ctx = contextProvider.get();
+        try {
+            return UserTransaction.class.cast(ctx.lookup("UserTransaction"));
+        } catch (NamingException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }

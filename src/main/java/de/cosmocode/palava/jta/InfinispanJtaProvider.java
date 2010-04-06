@@ -20,6 +20,7 @@
 
 package de.cosmocode.palava.jta;
 
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import de.cosmocode.palava.core.lifecycle.Initializable;
@@ -30,29 +31,39 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.naming.*;
+import javax.transaction.TransactionManager;
+import javax.transaction.UserTransaction;
 
 /**
+ * TODO
+ * 
  * @author Tobias Sarnowski
  */
-class InfinispanJtaProvider implements Initializable {
+final class InfinispanJtaProvider implements Initializable {
+    
     private static final Logger LOG = LoggerFactory.getLogger(InfinispanJtaProvider.class);
 
-    private static final JBossStandaloneJTAManagerLookup lookup = new JBossStandaloneJTAManagerLookup();
+    private static final JBossStandaloneJTAManagerLookup LOOKUP = new JBossStandaloneJTAManagerLookup();
 
-    private Provider<Context> contextProvider;
+    private final Provider<Context> provider;
 
     @Inject
-    public InfinispanJtaProvider(Provider<Context> contextProvider) {
-        this.contextProvider = contextProvider;
+    public InfinispanJtaProvider(Provider<Context> provider) {
+        this.provider = Preconditions.checkNotNull(provider, "Provider");
     }
 
     @Override
     public void initialize() throws LifecycleException {
-        Context ctx = contextProvider.get();
+        final Context context = provider.get();
+        
         try {
-            bind("java:/TransactionManager", lookup.getTransactionManager(), lookup.getTransactionManager().getClass(), ctx);
-            bind("UserTransaction", lookup.getUserTransaction(), lookup.getUserTransaction().getClass(), ctx);
+            final TransactionManager manager = LOOKUP.getTransactionManager();
+            bind("java:/TransactionManager", manager, manager.getClass(), context);
+            final UserTransaction tx = LOOKUP.getUserTransaction();
+            bind("UserTransaction", tx, tx.getClass(), context);
+        /* CHECKSTYLE:OFF */
         } catch (Exception e) {
+        /* CHECKSTYLE:ON */
             throw new LifecycleException(e);
         }
     }
@@ -66,25 +77,26 @@ class InfinispanJtaProvider implements Initializable {
      * @param ctx       Naming context under which we bind the object
      * @throws Exception Thrown if a naming exception occurs during binding
      */
-    private void bind(String jndiName, Object who, Class classType, Context ctx) throws Exception {
+    private void bind(String jndiName, Object who, Class<?> classType, Context ctx) throws Exception {
         // Ah ! This service isn't serializable, so we use a helper class
+        Context context = ctx;
         NonSerializableFactory.bind(jndiName, who);
         Name n = ctx.getNameParser("").parse(jndiName);
         while (n.size() > 1) {
-            String ctxName = n.get(0);
+            final String ctxName = n.get(0);
             try {
-                ctx = (Context) ctx.lookup(ctxName);
+                context = (Context) context.lookup(ctxName);
             } catch (NameNotFoundException e) {
                 LOG.info("Creating subcontext: {}", ctxName);
-                ctx = ctx.createSubcontext(ctxName);
+                context = context.createSubcontext(ctxName);
             }
             n = n.getSuffix(1);
         }
 
         // The helper class NonSerializableFactory uses address type nns, we go on to
         // use the helper class to bind the service object in JNDI
-        StringRefAddr addr = new StringRefAddr("nns", jndiName);
-        Reference ref = new Reference(classType.getName(), addr, NonSerializableFactory.class.getName(), null);
+        final StringRefAddr addr = new StringRefAddr("nns", jndiName);
+        final Reference ref = new Reference(classType.getName(), addr, NonSerializableFactory.class.getName(), null);
         ctx.rebind(n.get(0), ref);
     }
 }

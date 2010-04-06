@@ -20,33 +20,38 @@
 
 package de.cosmocode.palava.jta;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.transaction.UserTransaction;
 
+import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+
 /**
+ * {@link Provider} for {@link UserTransaction} which uses the bound {@link Context}
+ * to find an instance.
+ * 
  * @author Tobias Sarnowski
+ * @author Willi Schoenborn
  */
 final class UserTransactionProvider implements Provider<UserTransaction> {
-    private static final Logger LOG = LoggerFactory.getLogger(UserTransactionProvider.class);
-    private Provider<Context> contextProvider;
+    
+    private final Provider<Context> provider;
 
     @Inject
-    public UserTransactionProvider(Provider<Context> contextProvider) {
-        this.contextProvider = contextProvider;
+    public UserTransactionProvider(Provider<Context> provider) {
+        this.provider = Preconditions.checkNotNull(provider, "Provider");
     }
-
 
     @Override
     public UserTransaction get() {
-        Context ctx = contextProvider.get();
+        final Context context = provider.get();
+        
         try {
-            return UserTransaction.class.cast(ctx.lookup("UserTransaction"));
+            final Object tx = context.lookup("UserTransaction");
+            assert tx instanceof UserTransaction : String.format("%s should be a UserTransaction", tx);
+            return UserTransaction.class.cast(tx);
         } catch (NamingException e) {
             throw new IllegalStateException(e);
         }

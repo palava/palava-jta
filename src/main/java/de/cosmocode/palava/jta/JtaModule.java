@@ -20,22 +20,24 @@
 
 package de.cosmocode.palava.jta;
 
-import com.google.inject.Binder;
-import com.google.inject.Module;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.transaction.UserTransaction;
 
+import com.google.inject.Binder;
+import com.google.inject.Module;
+import com.google.inject.Singleton;
+
 /**
+ * Binds the {@link InfinispanJtaProvider} as eager {@link Singleton}.
+ * 
  * @author Tobias Sarnowski
+ * @author Willi Schoenborn
  */
-public class JtaModule implements Module {
-    private static final Logger LOG = LoggerFactory.getLogger(JtaModule.class);
+public final class JtaModule implements Module {
 
     @Override
     public void configure(Binder binder) {
         binder.bind(InfinispanJtaProvider.class).asEagerSingleton();
-        binder.bind(UserTransaction.class).toProvider(UserTransactionProvider.class);
+        binder.bind(UserTransaction.class).toProvider(UserTransactionProvider.class).in(Singleton.class);
     }
+    
 }

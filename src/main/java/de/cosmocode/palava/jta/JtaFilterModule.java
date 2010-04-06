@@ -20,21 +20,19 @@
 
 package de.cosmocode.palava.jta;
 
-import com.google.inject.Binder;
-import com.google.inject.Module;
 import de.cosmocode.palava.ipc.Commands;
 import de.cosmocode.palava.ipc.FilterModule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
+ * Configures the {@link JtaFilter} to filter any command.
+ * 
  * @author Tobias Sarnowski
  */
-public class JtaFilterModule extends FilterModule {
-    private static final Logger LOG = LoggerFactory.getLogger(JtaFilterModule.class);
+public final class JtaFilterModule extends FilterModule {
 
     @Override
     protected void configure() {
         filter(Commands.any()).through(JtaFilter.class);
     }
+    
 }

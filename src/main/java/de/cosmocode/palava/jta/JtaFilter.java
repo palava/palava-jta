@@ -33,21 +33,27 @@ import javax.transaction.UserTransaction;
 import java.util.Map;
 
 /**
+ * TODO
+ * 
  * @author Tobias Sarnowski
  */
 @Singleton
 final class JtaFilter implements IpcCallFilter {
+    
     private static final Logger LOG = LoggerFactory.getLogger(JtaFilter.class);
-    private Provider<UserTransaction> userTransactionProvider;
+    
+    private Provider<UserTransaction> provider;
 
     @Inject
-    public JtaFilter(Provider<UserTransaction> userTransactionProvider) {
-        this.userTransactionProvider = userTransactionProvider;
+    public JtaFilter(Provider<UserTransaction> provider) {
+        this.provider = provider;
     }
 
     @Override
-    public Map<String, Object> filter(IpcCall call, IpcCommand command, IpcCallFilterChain chain) throws IpcCommandExecutionException {
-        UserTransaction utx = userTransactionProvider.get();
+    public Map<String, Object> filter(IpcCall call, IpcCommand command, IpcCallFilterChain chain) 
+        throws IpcCommandExecutionException {
+        
+        final UserTransaction utx = provider.get();
         final Map<String, Object> response;
 
         // begin transaction

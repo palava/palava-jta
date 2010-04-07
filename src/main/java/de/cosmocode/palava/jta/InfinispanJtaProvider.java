@@ -20,19 +20,25 @@
 
 package de.cosmocode.palava.jta;
 
-import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import de.cosmocode.palava.core.lifecycle.Initializable;
-import de.cosmocode.palava.core.lifecycle.LifecycleException;
+import javax.naming.Context;
+import javax.naming.Name;
+import javax.naming.NameNotFoundException;
+import javax.naming.Reference;
+import javax.naming.StringRefAddr;
+import javax.transaction.TransactionManager;
+import javax.transaction.UserTransaction;
+
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.jboss.util.naming.NonSerializableFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.naming.*;
-import javax.transaction.TransactionManager;
-import javax.transaction.UserTransaction;
+import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+
+import de.cosmocode.palava.core.lifecycle.Initializable;
+import de.cosmocode.palava.core.lifecycle.LifecycleException;
 
 /**
  * TODO

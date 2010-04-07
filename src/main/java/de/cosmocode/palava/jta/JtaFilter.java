@@ -20,17 +20,24 @@
 
 package de.cosmocode.palava.jta;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
-import de.cosmocode.palava.ipc.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Map;
 
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
-import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
+
+import de.cosmocode.palava.ipc.IpcCall;
+import de.cosmocode.palava.ipc.IpcCallFilter;
+import de.cosmocode.palava.ipc.IpcCallFilterChain;
+import de.cosmocode.palava.ipc.IpcCommand;
+import de.cosmocode.palava.ipc.IpcCommandExecutionException;
 
 /**
  * TODO
@@ -38,7 +45,7 @@ import java.util.Map;
  * @author Tobias Sarnowski
  */
 @Singleton
-final class JtaFilter implements IpcCallFilter {
+public final class JtaFilter implements IpcCallFilter {
     
     private static final Logger LOG = LoggerFactory.getLogger(JtaFilter.class);
     
@@ -65,20 +72,10 @@ final class JtaFilter implements IpcCallFilter {
             throw new IllegalStateException(e);
         }
 
-        // proceed with the chain
         try {
+            // proceed with the chain
             response = chain.filter(call, command);
-        } catch (Exception e) {
-            try {
-                utx.rollback();
-            } catch (Exception se) {
-                LOG.error("Failed to rollback UserTransaction " + utx + ": {}", se);
-            }
-            throw new IpcCommandExecutionException(e);
-        }
-
-        // commit transaction
-        try {
+            // commit transaction
             utx.commit();
         } catch (Exception e) {
             try {

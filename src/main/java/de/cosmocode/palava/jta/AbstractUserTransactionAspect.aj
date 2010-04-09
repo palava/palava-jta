@@ -20,7 +20,9 @@
 
 package de.cosmocode.palava.jta;
 
+import javax.transaction.NotSupportedException;
 import javax.transaction.Status;
+import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 
 import org.aspectj.lang.annotation.SuppressAjWarnings;
@@ -47,14 +49,27 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
     protected abstract pointcut transactional();
     
     @SuppressAjWarnings("adviceDidNotMatch")
-    Object around() throws Exception: transactional() {
+    Object around(): transactional() {
         final UserTransaction tx = provider.get();
         LOG.trace("Using transaction {}", tx);
-        final boolean localTx = tx.getStatus() == Status.STATUS_NO_TRANSACTION;
+        
+        final boolean localTx;
+        
+        try {
+            localTx = tx.getStatus() == Status.STATUS_NO_TRANSACTION;
+        } catch (SystemException e) {
+            throw new IllegalStateException(e);
+        }
 
         if (localTx) {
             LOG.trace("Beginning automatic transaction");
-            tx.begin();
+            try {
+                tx.begin();
+            } catch (NotSupportedException e) {
+                throw new IllegalStateException(e);
+            } catch (SystemException e) {
+                throw new IllegalStateException(e);
+            }
         } else {
             LOG.trace("Transaction already active");
         }
@@ -65,7 +80,11 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
             returnValue = proceed();
         } catch (RuntimeException e) {
             LOG.error("Exception inside automatic transaction context", e);
-            tx.rollback();
+            try {
+                tx.rollback();
+            } catch (SystemException inner) {
+                throw new IllegalStateException(inner);
+            }
             throw e;
         }
         
@@ -77,8 +96,12 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
             return returnValue;
         } catch (Exception e) {
             LOG.error("Commit in automatic transaction context failed", e);
-            tx.rollback();
-            throw e;
+            try {
+                tx.rollback();
+            } catch (SystemException inner) {
+                throw new IllegalStateException(inner);
+            }
+            throw new IllegalStateException(e);
         }
     }
     

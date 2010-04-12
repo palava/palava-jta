@@ -78,14 +78,14 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
         
         try {
             returnValue = proceed();
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             LOG.error("Exception inside automatic transaction context", e);
             try {
                 tx.rollback();
             } catch (SystemException inner) {
                 throw new IllegalStateException(inner);
             }
-            throw e;
+            throw new IllegalStateException(e);
         }
         
         try {

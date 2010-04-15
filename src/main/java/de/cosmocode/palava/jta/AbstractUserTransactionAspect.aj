@@ -79,7 +79,6 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
         try {
             returnValue = proceed();
         } catch (Exception e) {
-            LOG.error("Exception inside automatic transaction context", e);
             try {
                 if (local && 
                     (tx.getStatus() == Status.STATUS_ACTIVE || tx.getStatus() == Status.STATUS_MARKED_ROLLBACK)) {
@@ -89,8 +88,8 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
                     LOG.debug("Setting transaction {} as rollback only", tx);
                     tx.setRollbackOnly();
                 }
-            } catch (SystemException inner) {
-                throw new IllegalStateException(inner);
+            } catch (Exception inner) {
+                LOG.error("Rollback failed", inner);
             }
             throw new IllegalStateException(e);
         }
@@ -116,12 +115,11 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
                     tx.commit();
                     LOG.trace("Committed automatic transaction {}", tx);
                 } catch (Exception e) {
-                    LOG.error("Commit in automatic transaction context failed", e);
                     try {
                         LOG.info("Rolling back transaction {}", tx);
                         tx.rollback();
-                    } catch (SystemException inner) {
-                        throw new IllegalStateException(inner);
+                    } catch (Exception inner) {
+                        LOG.error("Rollback failed", inner);
                     }
                     throw new IllegalStateException(e);
                 }

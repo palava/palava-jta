@@ -81,10 +81,11 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
         } catch (Exception e) {
             LOG.error("Exception inside automatic transaction context", e);
             try {
-                if (local && tx.getStatus() == Status.STATUS_ACTIVE) {
+                if (local && 
+                    (tx.getStatus() == Status.STATUS_ACTIVE || tx.getStatus() == Status.STATUS_MARKED_ROLLBACK)) {
                     LOG.info("Rolling back local/active transaction {}", tx);
                     tx.rollback();
-                } else {
+                } else if (tx.getStatus() != Status.STATUS_ROLLEDBACK || tx.getStatus() != Status.STATUS_ROLLING_BACK) {
                     LOG.debug("Setting transaction {} as rollback only", tx);
                     tx.setRollbackOnly();
                 }

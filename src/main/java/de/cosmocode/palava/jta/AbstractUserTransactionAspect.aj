@@ -62,7 +62,7 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
         }
 
         if (local) {
-            LOG.trace("Beginning automatic transaction");
+            LOG.trace("Beginning automatic transaction {}", tx);
             try {
                 tx.begin();
             } catch (NotSupportedException e) {
@@ -71,7 +71,7 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
                 throw new IllegalStateException(e);
             }
         } else {
-            LOG.trace("Transaction already active");
+            LOG.trace("Transaction {} already active", tx);
         }
 
         final Object returnValue;
@@ -82,8 +82,10 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
             LOG.error("Exception inside automatic transaction context", e);
             try {
                 if (local && tx.getStatus() == Status.STATUS_ACTIVE) {
+                    LOG.info("Rolling back local/active transaction {}", tx);
                     tx.rollback();
                 } else {
+                    LOG.debug("Setting transaction {} as rollback only", tx);
                     tx.setRollbackOnly();
                 }
             } catch (SystemException inner) {
@@ -103,6 +105,7 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
         if (local) {
             if (status == Status.STATUS_MARKED_ROLLBACK) {
                 try {
+                    LOG.trace("Rolling back marked transaction {}", tx);
                     tx.rollback();
                 } catch (SystemException e) {
                     throw new IllegalStateException(e);
@@ -110,10 +113,11 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
             } else {
                 try {
                     tx.commit();
-                    LOG.trace("Committed automatic transaction");
+                    LOG.trace("Committed automatic transaction {}", tx);
                 } catch (Exception e) {
                     LOG.error("Commit in automatic transaction context failed", e);
                     try {
+                        LOG.info("Rolling back transaction {}", tx);
                         tx.rollback();
                     } catch (SystemException inner) {
                         throw new IllegalStateException(inner);

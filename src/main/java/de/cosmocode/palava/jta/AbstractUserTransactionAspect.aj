@@ -53,15 +53,15 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
         final UserTransaction tx = provider.get();
         LOG.trace("Using transaction {}", tx);
         
-        final boolean localTx;
+        final boolean local;
         
         try {
-            localTx = tx.getStatus() == Status.STATUS_NO_TRANSACTION;
+            local = tx.getStatus() == Status.STATUS_NO_TRANSACTION;
         } catch (SystemException e) {
             throw new IllegalStateException(e);
         }
 
-        if (localTx) {
+        if (local) {
             LOG.trace("Beginning automatic transaction");
             try {
                 tx.begin();
@@ -81,28 +81,49 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
         } catch (Exception e) {
             LOG.error("Exception inside automatic transaction context", e);
             try {
-                tx.rollback();
+                if (local && tx.getStatus() == Status.STATUS_ACTIVE) {
+                    tx.rollback();
+                } else {
+                    tx.setRollbackOnly();
+                }
             } catch (SystemException inner) {
                 throw new IllegalStateException(inner);
             }
             throw new IllegalStateException(e);
         }
         
+        final int status;
+        
         try {
-            if (localTx && tx.getStatus() == Status.STATUS_ACTIVE) {
-                tx.commit();
-                LOG.trace("Committed automatic transaction");
-            }
-            return returnValue;
-        } catch (Exception e) {
-            LOG.error("Commit in automatic transaction context failed", e);
-            try {
-                tx.rollback();
-            } catch (SystemException inner) {
-                throw new IllegalStateException(inner);
-            }
+            status = tx.getStatus();
+        } catch (SystemException e) {
             throw new IllegalStateException(e);
         }
+        
+        if (local) {
+            if (status == Status.STATUS_MARKED_ROLLBACK) {
+                try {
+                    tx.rollback();
+                } catch (SystemException e) {
+                    throw new IllegalStateException(e);
+                }
+            } else {
+                try {
+                    tx.commit();
+                    LOG.trace("Committed automatic transaction");
+                } catch (Exception e) {
+                    LOG.error("Commit in automatic transaction context failed", e);
+                    try {
+                        tx.rollback();
+                    } catch (SystemException inner) {
+                        throw new IllegalStateException(inner);
+                    }
+                    throw new IllegalStateException(e);
+                }
+            }
+        }
+        
+        return returnValue;
     }
     
 }

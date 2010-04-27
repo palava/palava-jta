@@ -41,7 +41,7 @@ import de.cosmocode.palava.core.lifecycle.Initializable;
 import de.cosmocode.palava.core.lifecycle.LifecycleException;
 
 /**
- * TODO
+ * TODO add javadoc
  * 
  * @author Tobias Sarnowski
  */
@@ -49,6 +49,7 @@ final class InfinispanJtaProvider implements Initializable {
     
     private static final Logger LOG = LoggerFactory.getLogger(InfinispanJtaProvider.class);
 
+    // TODO why static?
     private static final JBossStandaloneJTAManagerLookup LOOKUP = new JBossStandaloneJTAManagerLookup();
 
     private final Provider<Context> provider;
@@ -78,9 +79,9 @@ final class InfinispanJtaProvider implements Initializable {
      * Helper method that binds the a non serializable object to the JNDI tree.
      *
      * @param jndiName  Name under which the object must be bound
-     * @param who       Object to bind in JNDI
+     * @param who Object to bind in JNDI
      * @param classType Class type under which should appear the bound object
-     * @param ctx       Naming context under which we bind the object
+     * @param ctx Naming context under which we bind the object
      * @throws Exception Thrown if a naming exception occurs during binding
      */
     private void bind(String jndiName, Object who, Class<?> classType, Context ctx) throws Exception {
@@ -105,4 +106,5 @@ final class InfinispanJtaProvider implements Initializable {
         final Reference ref = new Reference(classType.getName(), addr, NonSerializableFactory.class.getName(), null);
         ctx.rebind(n.get(0), ref);
     }
+    
 }

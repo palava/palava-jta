@@ -20,26 +20,16 @@
 
 package de.cosmocode.palava.jta;
 
-import javax.transaction.TransactionManager;
-import javax.transaction.UserTransaction;
-
-import com.google.inject.Binder;
-import com.google.inject.Module;
-import com.google.inject.Singleton;
-
 /**
- * Binds the {@link JtaProvider} as eager {@link Singleton}.
- * 
  * @author Tobias Sarnowski
- * @author Willi Schoenborn
  */
-public final class JtaModule implements Module {
+public class JtaConfig {
 
-    @Override
-    public void configure(Binder binder) {
-        binder.bind(JtaProvider.class).asEagerSingleton();
-        binder.bind(TransactionManager.class).toProvider(TransactionManagerProvider.class).in(Singleton.class);
-        binder.bind(UserTransaction.class).toProvider(UserTransactionProvider.class).in(Singleton.class);
-    }
-    
+    public static final String PREFIX = "jta.";
+
+    public static final String MANAGER = PREFIX + "manager";
+    public static final String USER = PREFIX + "user";
+
+    public static final String DEFAULT_MANAGER = "java:/TransactionManager";
+    public static final String DEFAULT_USER = "UserTransaction";
 }

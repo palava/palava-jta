@@ -23,41 +23,41 @@ package de.cosmocode.palava.jta;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
+import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
 
 /**
- * {@link Provider} for {@link UserTransaction} which uses the bound {@link Context}
- * to find an instance.
- * 
  * @author Tobias Sarnowski
- * @author Willi Schoenborn
  */
-final class UserTransactionProvider implements Provider<UserTransaction> {
-    
-    private final Provider<Context> provider;
-    private String user = JtaConfig.DEFAULT_USER;
+public class TransactionManagerProvider implements Provider<TransactionManager> {
+    private static final Logger LOG = LoggerFactory.getLogger(TransactionManagerProvider.class);
+
+    private Provider<Context> contextProvider;
+    private String manager = JtaConfig.DEFAULT_MANAGER;
 
     @Inject
-    public UserTransactionProvider(Provider<Context> provider) {
-        this.provider = provider;
+    public TransactionManagerProvider(Provider<Context> contextProvider) {
+        this.contextProvider = contextProvider;
     }
 
     @Inject(optional = true)
-    public void setUser(@Named(JtaConfig.USER) String user) {
-        this.user = user;
+    public void setManager(@Named(JtaConfig.MANAGER) String manager) {
+        this.manager = manager;
     }
 
     @Override
-    public UserTransaction get() {
-        final Context context = provider.get();
-        
+    public TransactionManager get() {
+        final Context context = contextProvider.get();
+
         try {
-            final Object tx = context.lookup(user);
-            assert tx instanceof UserTransaction : String.format("%s should be a UserTransaction", tx);
-            return UserTransaction.class.cast(tx);
+            final Object tm = context.lookup(manager);
+            assert tm instanceof TransactionManager : String.format("%s should be a TransactionManager", tm);
+            return TransactionManager.class.cast(tm);
         } catch (NamingException e) {
             throw new IllegalStateException(e);
         }

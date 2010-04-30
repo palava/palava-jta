@@ -1,34 +1,30 @@
 /**
- * palava - a java-php-bridge
- * Copyright (C) 2007-2010  CosmoCode GmbH
+ * Copyright 2010 CosmoCode GmbH
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- * MA  02110-1301, USA.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package de.cosmocode.palava.jta;
 
-import javax.naming.Context;
-import javax.naming.Name;
-import javax.naming.NameNotFoundException;
-import javax.naming.Reference;
-import javax.naming.StringRefAddr;
+import javax.naming.*;
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
 
+import bitronix.tm.BitronixTransactionManager;
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
 import com.google.inject.name.Named;
+import de.cosmocode.palava.core.lifecycle.Disposable;
 import org.jboss.util.naming.NonSerializableFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,23 +35,30 @@ import com.google.inject.Provider;
 import de.cosmocode.palava.core.lifecycle.Initializable;
 import de.cosmocode.palava.core.lifecycle.LifecycleException;
 
+import java.io.File;
+import java.util.Properties;
+
 /**
- * Binds the JBoss default provider as the JTA manager.
+ * Binds the Bitronix JTA provider as the JTA manager.
  * 
  * @author Tobias Sarnowski
  */
-final class JtaProvider implements Initializable {
+final class JtaProvider implements Initializable, Disposable {
     
     private static final Logger LOG = LoggerFactory.getLogger(JtaProvider.class);
 
     private final Provider<Context> provider;
+    private File storage;
 
     private String manager = JtaConfig.DEFAULT_MANAGER;
     private String user = JtaConfig.DEFAULT_USER;
 
+    private BitronixTransactionManager btm;
+
     @Inject
-    public JtaProvider(Provider<Context> provider) {
+    public JtaProvider(Provider<Context> provider, @Named(JtaConfig.STORAGE_DIRECTORY) File storage) {
         this.provider = provider;
+        this.storage = storage;
     }
 
     @Inject(optional = true)
@@ -73,11 +76,24 @@ final class JtaProvider implements Initializable {
         final Context context = provider.get();
 
         try {
-            final TransactionManager tm = com.arjuna.ats.jta.TransactionManager.transactionManager();
-            final UserTransaction tx = com.arjuna.ats.jta.UserTransaction.userTransaction();
-            
-            bind(manager, tm, tm.getClass(), context);
-            bind(user, tx, tx.getClass(), context);
+            LOG.trace("Configuring JTA provider");
+            TransactionManagerServices.getConfiguration().setLogPart1Filename(new File(storage, "log1").getAbsolutePath());
+            TransactionManagerServices.getConfiguration().setLogPart2Filename(new File(storage, "log2").getAbsolutePath());
+
+            btm = TransactionManagerServices.getTransactionManager();
+            LOG.debug("Starting JTA provider");
+            btm.begin();
+
+            final TransactionManager tm = btm;
+            final UserTransaction tx = btm;
+
+            LOG.info("Binding TransactionManager to {} [{}]", manager, tm);
+            //bind(manager, tm, tm.getClass(), context);
+            bind(context, manager, tm);
+
+            LOG.info("Binding UserTransaction to {} [{}]", user, tx);
+            //bind(user, tx, tx.getClass(), context);
+            bind(context, user, tx);
         /* CHECKSTYLE:OFF */
         } catch (Exception e) {
         /* CHECKSTYLE:ON */
@@ -85,8 +101,13 @@ final class JtaProvider implements Initializable {
         }
     }
 
+    @Override
+    public void dispose() throws LifecycleException {
+        btm.shutdown();
+    }
+
     /**
-     * Helper method that binds the a non serializable object to the JNDI tree.
+     * Helper method that binds a non serializable object to the JNDI tree.
      *
      * @param jndiName  Name under which the object must be bound
      * @param who       Object to bind in JNDI
@@ -115,5 +136,23 @@ final class JtaProvider implements Initializable {
         final StringRefAddr addr = new StringRefAddr("nns", jndiName);
         final Reference ref = new Reference(classType.getName(), addr, NonSerializableFactory.class.getName(), null);
         ctx.rebind(n.get(0), ref);
+    }
+
+    private void bind(Context context, String jndiName, Object obj) throws NamingException {
+        Context ctx = context;
+        Name name = ctx.getNameParser("").parse(jndiName);
+        while (name.size() > 1) {
+            final String ctxName = name.get(0);
+            try {
+                ctx = (Context)ctx.lookup(ctxName);
+                LOG.trace("Subcontext {} already exists", ctxName);
+            }catch (NameNotFoundException e) {
+                LOG.info("Creating Subcontext {}", ctxName);
+                ctx = ctx.createSubcontext(ctxName);
+            }
+            name = name.getSuffix(1);
+        }
+        ctx.bind(name, obj);
+        //context.bind(jndiName, obj);
     }
 }

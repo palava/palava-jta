@@ -57,6 +57,6 @@ public class TransactionManagerCounter extends AbstractForwardingTransactionMana
 
     @Override
     public String toString() {
-        return "{" + super.toString() + ":COUNTED}";
+        return "{" + super.toString() + ":COUNTED:p" + counter.getPending() + ":c" + counter.getCommitted() + ":r" + counter.getRolledback() + "}";
     }
 }

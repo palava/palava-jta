@@ -16,6 +16,7 @@
 
 package de.cosmocode.palava.jta;
 
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,10 +28,10 @@ import javax.transaction.*;
 public abstract class AbstractForwardingUserTransaction implements UserTransaction {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractForwardingUserTransaction.class);
 
-    private UserTransaction userTransaction;
+    private final UserTransaction userTransaction;
 
     protected AbstractForwardingUserTransaction(UserTransaction userTransaction) {
-        this.userTransaction = userTransaction;
+        this.userTransaction = Preconditions.checkNotNull(userTransaction, "UserTransaction");
     }
 
     @Override

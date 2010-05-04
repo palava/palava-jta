@@ -16,21 +16,20 @@
 
 package de.cosmocode.palava.jta;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.common.base.Preconditions;
 
 import javax.transaction.*;
+import java.io.Serializable;
 
 /**
  * @author Tobias Sarnowski
  */
-public abstract class AbstractForwardingTransactionManager implements TransactionManager {
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractForwardingTransactionManager.class);
+public abstract class AbstractForwardingTransactionManager implements TransactionManager, Serializable {
 
-    private TransactionManager transactionManager;
+    private final TransactionManager transactionManager;
 
     protected AbstractForwardingTransactionManager(TransactionManager transactionManager) {
-        this.transactionManager = transactionManager;
+        this.transactionManager = Preconditions.checkNotNull(transactionManager, "TransactionManager");
     }
 
     @Override

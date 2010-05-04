@@ -16,28 +16,21 @@
 
 package de.cosmocode.palava.jta;
 
-import javax.naming.*;
-import javax.transaction.TransactionManager;
-import javax.transaction.UserTransaction;
-
 import bitronix.tm.BitronixTransactionManager;
 import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.resource.jdbc.PoolingDataSource;
+import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import de.cosmocode.palava.core.lifecycle.Disposable;
+import de.cosmocode.palava.core.lifecycle.Initializable;
+import de.cosmocode.palava.core.lifecycle.LifecycleException;
 import de.cosmocode.palava.jmx.MBeanService;
-import org.jboss.util.naming.NonSerializableFactory;
+import de.cosmocode.palava.jndi.JNDIContextBinder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-
-import de.cosmocode.palava.core.lifecycle.Initializable;
-import de.cosmocode.palava.core.lifecycle.LifecycleException;
-
+import javax.transaction.TransactionManager;
+import javax.transaction.UserTransaction;
 import java.io.File;
-import java.util.Properties;
 
 /**
  * Binds the Bitronix JTA provider as the JTA manager.
@@ -48,8 +41,8 @@ final class JtaProvider implements Initializable, Disposable {
     
     private static final Logger LOG = LoggerFactory.getLogger(JtaProvider.class);
 
-    private final Provider<Context> provider;
     private File storage;
+    private JNDIContextBinder jndiContextBinder;
     private MBeanService mBeanService;
 
     private String manager = JtaConfig.DEFAULT_MANAGER;
@@ -59,11 +52,11 @@ final class JtaProvider implements Initializable, Disposable {
     private final TransactionCounter counter = new TransactionCounter();
 
     @Inject
-    public JtaProvider(Provider<Context> provider,
-                       @Named(JtaConfig.STORAGE_DIRECTORY) File storage,
+    public JtaProvider(@Named(JtaConfig.STORAGE_DIRECTORY) File storage,
+                       JNDIContextBinder jndiContextBinder,
                        MBeanService mBeanService) {
-        this.provider = provider;
         this.storage = storage;
+        this.jndiContextBinder = jndiContextBinder;
         this.mBeanService = mBeanService;
     }
 
@@ -79,8 +72,6 @@ final class JtaProvider implements Initializable, Disposable {
 
     @Override
     public void initialize() throws LifecycleException {
-        final Context context = provider.get();
-
         try {
             LOG.trace("Configuring JTA provider");
             TransactionManagerServices.getConfiguration().setLogPart1Filename(new File(storage, "log1").getAbsolutePath());
@@ -94,10 +85,10 @@ final class JtaProvider implements Initializable, Disposable {
             final UserTransaction tx = new UserTransactionCounter(btm, counter);
 
             LOG.info("Binding TransactionManager to {} [{}]", manager, tm);
-            bind(context, manager, tm);
+            jndiContextBinder.bind(manager, tm, TransactionManager.class);
 
             LOG.info("Binding UserTransaction to {} [{}]", user, tx);
-            bind(context, user, tx);
+            jndiContextBinder.bind(user, tx, UserTransaction.class);
 
             mBeanService.register(counter);
 
@@ -112,64 +103,5 @@ final class JtaProvider implements Initializable, Disposable {
     public void dispose() throws LifecycleException {
         mBeanService.unregister(counter);
         btm.shutdown();
-    }
-
-    /**
-     * Helper method that binds a non serializable object to the JNDI tree.
-     *
-     * @param jndiName  Name under which the object must be bound
-     * @param who       Object to bind in JNDI
-     * @param classType Class type under which should appear the bound object
-     * @param ctx       Naming context under which we bind the object
-     * @throws Exception Thrown if a naming exception occurs during binding
-     */
-    /*
-    private void bind(String jndiName, Object who, Class<?> classType, Context ctx) throws Exception {
-        // Ah ! This service isn't serializable, so we use a helper class
-        Context context = ctx;
-        NonSerializableFactory.bind(jndiName, who);
-        Name n = ctx.getNameParser("").parse(jndiName);
-        while (n.size() > 1) {
-            final String ctxName = n.get(0);
-            try {
-                context = (Context) context.lookup(ctxName);
-            } catch (NameNotFoundException e) {
-                LOG.info("Creating subcontext: {}", ctxName);
-                context = context.createSubcontext(ctxName);
-            }
-            n = n.getSuffix(1);
-        }
-
-        // The helper class NonSerializableFactory uses address type nns, we go on to
-        // use the helper class to bind the service object in JNDI
-        final StringRefAddr addr = new StringRefAddr("nns", jndiName);
-        final Reference ref = new Reference(classType.getName(), addr, NonSerializableFactory.class.getName(), null);
-        ctx.rebind(n.get(0), ref);
-    }
-    */
-
-    /**
-     * 
-     * @param context
-     * @param jndiName
-     * @param obj
-     * @throws NamingException
-     */
-    private void bind(Context context, String jndiName, Object obj) throws NamingException {
-        Context ctx = context;
-        Name name = ctx.getNameParser("").parse(jndiName);
-        while (name.size() > 1) {
-            final String ctxName = name.get(0);
-            try {
-                ctx = (Context)ctx.lookup(ctxName);
-                LOG.trace("Subcontext {} already exists", ctxName);
-            }catch (NameNotFoundException e) {
-                LOG.info("Creating Subcontext {}", ctxName);
-                ctx = ctx.createSubcontext(ctxName);
-            }
-            name = name.getSuffix(1);
-        }
-        ctx.bind(name, obj);
-        //context.bind(jndiName, obj);
     }
 }

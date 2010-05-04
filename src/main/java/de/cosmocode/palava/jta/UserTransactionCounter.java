@@ -16,16 +16,12 @@
 
 package de.cosmocode.palava.jta;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.transaction.*;
 
 /**
  * @author Tobias Sarnowski
  */
 public class UserTransactionCounter extends AbstractForwardingUserTransaction {
-    private static final Logger LOG = LoggerFactory.getLogger(UserTransactionCounter.class);
 
     private TransactionCounter counter;
 

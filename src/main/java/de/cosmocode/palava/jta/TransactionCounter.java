@@ -16,21 +16,18 @@
 
 package de.cosmocode.palava.jta;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Tobias Sarnowski
  */
-public class TransactionCounter implements TransactionCounterMBean {
-    private static final Logger LOG = LoggerFactory.getLogger(TransactionCounter.class);
+public class TransactionCounter implements TransactionCounterMBean, Serializable {
 
-    private AtomicLong pending;
-    private AtomicLong committed;
-    private AtomicLong rolledbackSuccess;
-    private AtomicLong rolledbackFailed;
+    private final AtomicLong pending = new AtomicLong();
+    private final AtomicLong committed = new AtomicLong();
+    private final AtomicLong rolledbackSuccess = new AtomicLong();
+    private final AtomicLong rolledbackFailed = new AtomicLong();
 
 
     @Override

@@ -25,6 +25,7 @@ import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import com.google.inject.name.Named;
 import de.cosmocode.palava.core.lifecycle.Disposable;
+import de.cosmocode.palava.jmx.MBeanService;
 import org.jboss.util.naming.NonSerializableFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,16 +50,21 @@ final class JtaProvider implements Initializable, Disposable {
 
     private final Provider<Context> provider;
     private File storage;
+    private MBeanService mBeanService;
 
     private String manager = JtaConfig.DEFAULT_MANAGER;
     private String user = JtaConfig.DEFAULT_USER;
 
     private BitronixTransactionManager btm;
+    private final TransactionCounter counter = new TransactionCounter();
 
     @Inject
-    public JtaProvider(Provider<Context> provider, @Named(JtaConfig.STORAGE_DIRECTORY) File storage) {
+    public JtaProvider(Provider<Context> provider,
+                       @Named(JtaConfig.STORAGE_DIRECTORY) File storage,
+                       MBeanService mBeanService) {
         this.provider = provider;
         this.storage = storage;
+        this.mBeanService = mBeanService;
     }
 
     @Inject(optional = true)
@@ -84,16 +90,17 @@ final class JtaProvider implements Initializable, Disposable {
             LOG.debug("Starting JTA provider");
             btm.begin();
 
-            final TransactionManager tm = btm;
-            final UserTransaction tx = btm;
+            final TransactionManager tm = new TransactionManagerCounter(btm, counter);
+            final UserTransaction tx = new UserTransactionCounter(btm, counter);
 
             LOG.info("Binding TransactionManager to {} [{}]", manager, tm);
-            //bind(manager, tm, tm.getClass(), context);
             bind(context, manager, tm);
 
             LOG.info("Binding UserTransaction to {} [{}]", user, tx);
-            //bind(user, tx, tx.getClass(), context);
             bind(context, user, tx);
+
+            mBeanService.register(counter);
+
         /* CHECKSTYLE:OFF */
         } catch (Exception e) {
         /* CHECKSTYLE:ON */
@@ -103,6 +110,7 @@ final class JtaProvider implements Initializable, Disposable {
 
     @Override
     public void dispose() throws LifecycleException {
+        mBeanService.unregister(counter);
         btm.shutdown();
     }
 
@@ -115,6 +123,7 @@ final class JtaProvider implements Initializable, Disposable {
      * @param ctx       Naming context under which we bind the object
      * @throws Exception Thrown if a naming exception occurs during binding
      */
+    /*
     private void bind(String jndiName, Object who, Class<?> classType, Context ctx) throws Exception {
         // Ah ! This service isn't serializable, so we use a helper class
         Context context = ctx;
@@ -137,7 +146,15 @@ final class JtaProvider implements Initializable, Disposable {
         final Reference ref = new Reference(classType.getName(), addr, NonSerializableFactory.class.getName(), null);
         ctx.rebind(n.get(0), ref);
     }
+    */
 
+    /**
+     * 
+     * @param context
+     * @param jndiName
+     * @param obj
+     * @throws NamingException
+     */
     private void bind(Context context, String jndiName, Object obj) throws NamingException {
         Context ctx = context;
         Name name = ctx.getNameParser("").parse(jndiName);

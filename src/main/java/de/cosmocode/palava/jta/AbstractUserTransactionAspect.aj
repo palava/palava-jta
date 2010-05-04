@@ -48,6 +48,12 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
     Object around(): transactional() {
         final UserTransaction tx = provider.get();
         LOG.trace("Using transaction {}", tx);
+
+        try {
+            LOG.trace("Status of transaction: {}", tx.getStatus());
+        } catch (SystemException e) {
+            throw new IllegalStateException(e);
+        }
         
         final boolean local;
         

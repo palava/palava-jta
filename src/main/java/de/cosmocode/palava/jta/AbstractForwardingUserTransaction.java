@@ -63,4 +63,9 @@ public abstract class AbstractForwardingUserTransaction implements UserTransacti
     public void setTransactionTimeout(int i) throws SystemException {
         userTransaction.setTransactionTimeout(i);
     }
+
+    @Override
+    public String toString() {
+        return "{Forwarding:" + userTransaction.toString() + "}";
+    }
 }

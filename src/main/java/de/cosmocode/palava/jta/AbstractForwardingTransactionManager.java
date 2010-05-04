@@ -76,4 +76,9 @@ public abstract class AbstractForwardingTransactionManager implements Transactio
     public Transaction suspend() throws SystemException {
         return transactionManager.suspend();
     }
+
+    @Override
+    public String toString() {
+        return "{Forwarding:" + transactionManager.toString() + "}";
+    }
 }

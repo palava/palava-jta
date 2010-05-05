@@ -32,25 +32,37 @@ public class TransactionCounter implements TransactionCounterMBean, Serializable
 
     @Override
     public AtomicLong getRolledbackFailed() {
+        if (rolledbackFailed.get() < 0) {
+            rolledbackFailed.set(0);
+        }
         return rolledbackFailed;
     }
 
     @Override
     public AtomicLong getRolledbackSuccess() {
+        if (rolledbackSuccess.get() < 0) {
+            rolledbackSuccess.set(0);
+        }
         return rolledbackSuccess;
     }
 
     public long getRolledback() {
-        return rolledbackSuccess.get() + rolledbackFailed.get();
+        return getRolledbackSuccess().get() + getRolledbackFailed().get();
     }
 
     @Override
     public AtomicLong getCommitted() {
+        if (committed.get() < 0) {
+            committed.set(0);
+        }
         return committed;
     }
 
     @Override
     public AtomicLong getPending() {
+        if (pending.get() < 0) {
+            pending.set(0);
+        }
         return pending;
     }
 }

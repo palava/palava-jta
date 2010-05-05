@@ -19,16 +19,52 @@ package de.cosmocode.palava.jta;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
+ * MBean interface for {@link TransactionCounter}.
+ * 
  * @author Tobias Sarnowski
  */
 public interface TransactionCounterMBean {
-    AtomicLong getRolledbackFailed();
 
-    AtomicLong getRolledbackSuccess();
+    /**
+     * Retrieves the amount of pending transactions. A transaction
+     * is considered pending after begin, but before commit or rollback.
+     * 
+     * @since 1.0
+     * @return the amount of pending transactions
+     */
+    AtomicLong getPending();
 
-    long getRolledback();
-
+    /**
+     * Retrieves the amount of committed transactions.
+     * 
+     * @since 1.0
+     * @return the amount of committed transactions
+     */
     AtomicLong getCommitted();
 
-    AtomicLong getPending();
+    /**
+     * Retrieves the amount of rolled back transactions. This includes
+     * both successfully rolled back and failures.
+     * 
+     * @since 1.0
+     * @return the amount of rolled back transactions
+     */
+    long getRolledback();
+    
+    /**
+     * Retrieves the amount of successfully rolled back transaction. 
+     * 
+     * @since 1.0
+     * @return the amount of successfully rolled back transactions
+     */
+    AtomicLong getRolledbackSuccess();
+
+    /**
+     * Retrieves the amount of not successfully rolled back transactions.
+     * 
+     * @since 1.0
+     * @return the amount of not successfully rolled back transactions
+     */
+    AtomicLong getRolledbackFailed();
+    
 }

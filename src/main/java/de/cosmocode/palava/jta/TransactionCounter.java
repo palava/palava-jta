@@ -20,15 +20,19 @@ import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
+ * A value object which can be used to count pending, committed
+ * and rolled back transactions.
+ * 
  * @author Tobias Sarnowski
  */
-public class TransactionCounter implements TransactionCounterMBean, Serializable {
+final class TransactionCounter implements TransactionCounterMBean, Serializable {
 
+    private static final long serialVersionUID = 812994189242991126L;
+    
     private final AtomicLong pending = new AtomicLong();
     private final AtomicLong committed = new AtomicLong();
     private final AtomicLong rolledbackSuccess = new AtomicLong();
     private final AtomicLong rolledbackFailed = new AtomicLong();
-
 
     @Override
     public AtomicLong getRolledbackFailed() {
@@ -65,4 +69,5 @@ public class TransactionCounter implements TransactionCounterMBean, Serializable
         }
         return pending;
     }
+    
 }

@@ -17,17 +17,26 @@
 package de.cosmocode.palava.jta;
 
 /**
+ * Static constant holder class for jta config key names.
+ * 
  * @author Tobias Sarnowski
  */
-public class JtaConfig {
+public final class JtaConfig {
 
     public static final String PREFIX = "jta.";
 
     public static final String MANAGER = PREFIX + "manager";
+    
     public static final String USER = PREFIX + "user";
 
     public static final String STORAGE_DIRECTORY = PREFIX + "storage";
 
     public static final String DEFAULT_MANAGER = "java:/TransactionManager";
+    
     public static final String DEFAULT_USER = "java:comp/UserTransaction";
+    
+    private JtaConfig() {
+        
+    }
+    
 }

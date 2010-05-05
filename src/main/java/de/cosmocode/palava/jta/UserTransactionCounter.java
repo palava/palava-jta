@@ -16,18 +16,38 @@
 
 package de.cosmocode.palava.jta;
 
-import javax.transaction.*;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
+
+import com.google.common.base.Preconditions;
 
 /**
+ * Decorator for {@link UserTransaction} which counts pending, committed and rolled back
+ * transaction using the associated {@link TransactionCounter}.
+ * 
  * @author Tobias Sarnowski
+ * @author Willi Schoenborn
  */
-public class UserTransactionCounter extends AbstractForwardingUserTransaction {
+public class UserTransactionCounter extends ForwardingUserTransaction {
 
-    private TransactionCounter counter;
+    private static final long serialVersionUID = 4813218251170299613L;
 
-    protected UserTransactionCounter(UserTransaction userTransaction, TransactionCounter counter) {
-        super(userTransaction);
-        this.counter = counter;
+    private final TransactionCounter counter;
+    
+    private final UserTransaction transaction;
+
+    protected UserTransactionCounter(UserTransaction transaction, TransactionCounter counter) {
+        this.transaction = Preconditions.checkNotNull(transaction, "Transaction");
+        this.counter = Preconditions.checkNotNull(counter, "Counter");
+    }
+    
+    @Override
+    protected UserTransaction delegate() {
+        return transaction;
     }
 
     @Override
@@ -37,7 +57,8 @@ public class UserTransactionCounter extends AbstractForwardingUserTransaction {
     }
 
     @Override
-    public void commit() throws HeuristicMixedException, HeuristicRollbackException, IllegalStateException, RollbackException, SecurityException, SystemException {
+    public void commit() throws HeuristicMixedException, HeuristicRollbackException, RollbackException, 
+        SystemException {
         super.commit();
         counter.getPending().decrementAndGet();
         counter.getCommitted().incrementAndGet();
@@ -48,7 +69,9 @@ public class UserTransactionCounter extends AbstractForwardingUserTransaction {
         try {
             super.rollback();
             counter.getRolledbackSuccess().incrementAndGet();
+        /* CHECKSTYLE:OFF */
         } catch (Exception e) {
+        /* CHECKSTYLE:ON */
             counter.getRolledbackFailed().incrementAndGet();
         } finally {
             counter.getPending().decrementAndGet();
@@ -57,6 +80,8 @@ public class UserTransactionCounter extends AbstractForwardingUserTransaction {
 
     @Override
     public String toString() {
-        return "{" + super.toString() + ":COUNTED:p" + counter.getPending() + ":c" + counter.getCommitted() + ":r" + counter.getRolledback() + "}";
+        return String.format("{%s:COUNTED:p%s:c%s:%sr%s}", 
+            counter.getPending(), counter.getCommitted(), counter.getRolledback());
     }
+    
 }

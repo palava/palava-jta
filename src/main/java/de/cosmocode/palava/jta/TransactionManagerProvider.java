@@ -16,39 +16,44 @@
 
 package de.cosmocode.palava.jta;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.name.Named;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.transaction.TransactionManager;
-import javax.transaction.UserTransaction;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.name.Named;
 
 /**
+ * Provider for {@link TransactionManager}.
+ * 
  * @author Tobias Sarnowski
  */
 public class TransactionManagerProvider implements Provider<TransactionManager> {
+    
     private static final Logger LOG = LoggerFactory.getLogger(TransactionManagerProvider.class);
 
-    private Provider<Context> contextProvider;
+    private final Provider<Context> provider;
+    
     private String manager = JtaConfig.DEFAULT_MANAGER;
 
     @Inject
-    public TransactionManagerProvider(Provider<Context> contextProvider) {
-        this.contextProvider = contextProvider;
+    public TransactionManagerProvider(Provider<Context> provider) {
+        this.provider = Preconditions.checkNotNull(provider, "Provider");
     }
 
     @Inject(optional = true)
     public void setManager(@Named(JtaConfig.MANAGER) String manager) {
-        this.manager = manager;
+        this.manager = Preconditions.checkNotNull(manager, "Manager");
     }
 
     @Override
     public TransactionManager get() {
-        final Context context = contextProvider.get();
+        final Context context = provider.get();
 
         try {
             LOG.trace("Looking for TransactionManager in {}", manager);

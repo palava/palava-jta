@@ -16,56 +16,59 @@
 
 package de.cosmocode.palava.jta;
 
-import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.Serializable;
 
-import javax.transaction.*;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
+
+import com.google.common.collect.ForwardingObject;
 
 /**
+ * Abstract decorator for {@link UserTransaction}s.
+ * 
+ * @author Willi Schoenborn
  * @author Tobias Sarnowski
  */
-public abstract class AbstractForwardingUserTransaction implements UserTransaction {
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractForwardingUserTransaction.class);
+public abstract class ForwardingUserTransaction extends ForwardingObject implements UserTransaction, Serializable {
+    
+    private static final long serialVersionUID = 8578402136500067868L;
 
-    private final UserTransaction userTransaction;
-
-    protected AbstractForwardingUserTransaction(UserTransaction userTransaction) {
-        this.userTransaction = Preconditions.checkNotNull(userTransaction, "UserTransaction");
-    }
-
+    @Override
+    protected abstract UserTransaction delegate();
+    
     @Override
     public void begin() throws NotSupportedException, SystemException {
-        userTransaction.begin();
+        delegate().begin();
     }
 
     @Override
-    public void commit() throws HeuristicMixedException, HeuristicRollbackException, IllegalStateException, RollbackException, SecurityException, SystemException {
-        userTransaction.commit();
+    public void commit() throws HeuristicMixedException, HeuristicRollbackException,
+        RollbackException, SystemException {
+        delegate().commit();
     }
 
     @Override
     public int getStatus() throws SystemException {
-        return userTransaction.getStatus();
+        return delegate().getStatus();
     }
 
     @Override
     public void rollback() throws IllegalStateException, SecurityException, SystemException {
-        userTransaction.rollback();
+        delegate().rollback();
     }
 
     @Override
     public void setRollbackOnly() throws IllegalStateException, SystemException {
-        userTransaction.setRollbackOnly();
+        delegate().setRollbackOnly();
     }
 
     @Override
     public void setTransactionTimeout(int i) throws SystemException {
-        userTransaction.setTransactionTimeout(i);
+        delegate().setTransactionTimeout(i);
     }
 
-    @Override
-    public String toString() {
-        return "{Forwarding:" + userTransaction.toString() + "}";
-    }
 }

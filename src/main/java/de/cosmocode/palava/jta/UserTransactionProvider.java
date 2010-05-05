@@ -16,15 +16,17 @@
 
 package de.cosmocode.palava.jta;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.name.Named;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.transaction.UserTransaction;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.name.Named;
 
 /**
  * {@link Provider} for {@link UserTransaction} which uses the bound {@link Context}
@@ -41,12 +43,12 @@ final class UserTransactionProvider implements Provider<UserTransaction> {
 
     @Inject
     public UserTransactionProvider(Provider<Context> provider) {
-        this.provider = provider;
+        this.provider = Preconditions.checkNotNull(provider, "Provider");
     }
 
     @Inject(optional = true)
     public void setUser(@Named(JtaConfig.USER) String user) {
-        this.user = user;
+        this.user = Preconditions.checkNotNull(user, "User");
     }
 
     @Override
@@ -62,4 +64,5 @@ final class UserTransactionProvider implements Provider<UserTransaction> {
             throw new IllegalStateException(e);
         }
     }
+    
 }

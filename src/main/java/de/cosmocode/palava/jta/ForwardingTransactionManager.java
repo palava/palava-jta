@@ -16,69 +16,82 @@
 
 package de.cosmocode.palava.jta;
 
-import com.google.common.base.Preconditions;
-
-import javax.transaction.*;
 import java.io.Serializable;
 
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.InvalidTransactionException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
+import com.google.common.collect.ForwardingObject;
+
 /**
+ * Abstract decorator for {@link TransactionManager}s.
+ * 
+ * @author Willi Schoenborn
  * @author Tobias Sarnowski
  */
-public abstract class AbstractForwardingTransactionManager implements TransactionManager, Serializable {
+public abstract class ForwardingTransactionManager extends ForwardingObject implements TransactionManager, 
+    Serializable {
+    
+    private static final long serialVersionUID = -6693393016156665250L;
 
-    private final TransactionManager transactionManager;
-
-    protected AbstractForwardingTransactionManager(TransactionManager transactionManager) {
-        this.transactionManager = Preconditions.checkNotNull(transactionManager, "TransactionManager");
-    }
+    @Override
+    protected abstract TransactionManager delegate();
 
     @Override
     public void begin() throws NotSupportedException, SystemException {
-        transactionManager.begin();
+        delegate().begin();
     }
 
     @Override
-    public void commit() throws HeuristicMixedException, HeuristicRollbackException, IllegalStateException, RollbackException, SecurityException, SystemException {
-        transactionManager.commit();
+    public void commit() throws HeuristicMixedException, HeuristicRollbackException, RollbackException, 
+        SystemException {
+        delegate().commit();
     }
 
     @Override
     public int getStatus() throws SystemException {
-        return transactionManager.getStatus();
+        return delegate().getStatus();
     }
 
     @Override
     public Transaction getTransaction() throws SystemException {
-        return transactionManager.getTransaction();
+        return delegate().getTransaction();
     }
 
     @Override
-    public void resume(Transaction transaction) throws IllegalStateException, InvalidTransactionException, SystemException {
-        transactionManager.resume(transaction);
+    public void resume(Transaction transaction) throws InvalidTransactionException, SystemException {
+        delegate().resume(transaction);
     }
 
     @Override
     public void rollback() throws IllegalStateException, SecurityException, SystemException {
-        transactionManager.rollback();
+        delegate().rollback();
     }
 
     @Override
     public void setRollbackOnly() throws IllegalStateException, SystemException {
-        transactionManager.setRollbackOnly();
+        delegate().setRollbackOnly();
     }
 
     @Override
     public void setTransactionTimeout(int i) throws SystemException {
-        transactionManager.setTransactionTimeout(i);
+        delegate().setTransactionTimeout(i);
     }
 
     @Override
     public Transaction suspend() throws SystemException {
-        return transactionManager.suspend();
+        return delegate().suspend();
     }
 
     @Override
     public String toString() {
-        return "{Forwarding:" + transactionManager.toString() + "}";
+        return "{Forwarding:" + delegate().toString() + "}";
     }
+    
 }

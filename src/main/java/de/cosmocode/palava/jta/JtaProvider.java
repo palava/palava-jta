@@ -16,21 +16,27 @@
 
 package de.cosmocode.palava.jta;
 
+import java.io.File;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.UserTransaction;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import bitronix.tm.BitronixTransactionManager;
+import bitronix.tm.Configuration;
 import bitronix.tm.TransactionManagerServices;
+
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+
 import de.cosmocode.palava.core.lifecycle.Disposable;
 import de.cosmocode.palava.core.lifecycle.Initializable;
 import de.cosmocode.palava.core.lifecycle.LifecycleException;
 import de.cosmocode.palava.jmx.MBeanService;
 import de.cosmocode.palava.jndi.JNDIContextBinder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.transaction.TransactionManager;
-import javax.transaction.UserTransaction;
-import java.io.File;
 
 /**
  * Binds the Bitronix JTA provider as the JTA manager.
@@ -52,30 +58,35 @@ final class JtaProvider implements Initializable, Disposable {
     private final TransactionCounter counter = new TransactionCounter();
 
     @Inject
-    public JtaProvider(@Named(JtaConfig.STORAGE_DIRECTORY) File storage,
-                       JNDIContextBinder jndiContextBinder,
-                       MBeanService mBeanService) {
+    public JtaProvider(
+        @Named(JtaConfig.STORAGE_DIRECTORY) File storage,
+        JNDIContextBinder jndiContextBinder,
+        MBeanService mBeanService) {
+        
         this.storage = storage;
         this.jndiContextBinder = jndiContextBinder;
         this.mBeanService = mBeanService;
     }
 
     @Inject(optional = true)
-    public void setManager(@Named(JtaConfig.MANAGER) String manager) {
-        this.manager = manager;
+    void setManager(@Named(JtaConfig.MANAGER) String manager) {
+        this.manager = Preconditions.checkNotNull(manager, "Manager");
     }
 
     @Inject(optional = true)
-    public void setUser(@Named(JtaConfig.USER) String user) {
-        this.user = user;
+    void setUser(@Named(JtaConfig.USER) String user) {
+        this.user = Preconditions.checkNotNull(user, "User");
     }
 
     @Override
     public void initialize() throws LifecycleException {
         try {
             LOG.trace("Configuring JTA provider");
-            TransactionManagerServices.getConfiguration().setLogPart1Filename(new File(storage, "log1").getAbsolutePath());
-            TransactionManagerServices.getConfiguration().setLogPart2Filename(new File(storage, "log2").getAbsolutePath());
+            
+            final Configuration configuration = TransactionManagerServices.getConfiguration();
+            
+            configuration.setLogPart1Filename(new File(storage, "log1").getAbsolutePath());
+            configuration.setLogPart2Filename(new File(storage, "log2").getAbsolutePath());
 
             btm = TransactionManagerServices.getTransactionManager();
             LOG.debug("Starting JTA provider");
@@ -101,7 +112,11 @@ final class JtaProvider implements Initializable, Disposable {
 
     @Override
     public void dispose() throws LifecycleException {
-        mBeanService.unregister(counter);
-        btm.shutdown();
+        try {
+            mBeanService.unregister(counter);
+        } finally {
+            btm.shutdown();
+        }
     }
+    
 }

@@ -80,7 +80,8 @@ public class UserTransactionCounter extends ForwardingUserTransaction {
 
     @Override
     public String toString() {
-        return String.format("{%s:COUNTED:p%s:c%s:%sr%s}", 
+        return String.format("{%s COUNTED p%s c%s r%s}",
+                transaction.toString(),
             counter.getPending(), counter.getCommitted(), counter.getRolledback());
     }
     

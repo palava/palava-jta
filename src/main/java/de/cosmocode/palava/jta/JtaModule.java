@@ -24,7 +24,7 @@ import com.google.inject.Module;
 import com.google.inject.Singleton;
 
 /**
- * Binds the {@link JtaProvider} as eager {@link Singleton}.
+ * Binds the {@link JtaLoader} as eager {@link Singleton}.
  * 
  * @author Tobias Sarnowski
  * @author Willi Schoenborn
@@ -33,7 +33,7 @@ public final class JtaModule implements Module {
 
     @Override
     public void configure(Binder binder) {
-        binder.bind(JtaProvider.class).asEagerSingleton();
+        binder.bind(JtaLoader.class).asEagerSingleton();
         binder.bind(TransactionManager.class).toProvider(TransactionManagerProvider.class).in(Singleton.class);
         binder.bind(UserTransaction.class).toProvider(UserTransactionProvider.class).in(Singleton.class);
     }

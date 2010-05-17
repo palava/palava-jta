@@ -42,7 +42,6 @@ import de.cosmocode.palava.jndi.JNDIContextBinder;
 final class JtaLoader implements Initializable, Disposable {    
     private static final Logger LOG = LoggerFactory.getLogger(JtaLoader.class);
 
-    private File storage;
     private JNDIContextBinder jndiContextBinder;
     private MBeanService mBeanService;
 	private JtaProvider jtaProvider;
@@ -54,12 +53,10 @@ final class JtaLoader implements Initializable, Disposable {
 
     @Inject
     public JtaLoader(
-        @Named(JtaConfig.STORAGE_DIRECTORY) File storage,
         JNDIContextBinder jndiContextBinder,
         MBeanService mBeanService,
         JtaProvider jtaProvider) {
         
-        this.storage = storage;
         this.jndiContextBinder = jndiContextBinder;
         this.mBeanService = mBeanService;
 	    this.jtaProvider = jtaProvider;

@@ -20,18 +20,25 @@ import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
 
 /**
+ * Provider interface for jta {@link TransactionManager}
+ * and {@link UserTransaction}.
+ * 
  * @author Tobias Sarnowski
  */
 public interface JtaProvider {
 
-	/**
-	 * @return the transaction manager object to bind to jndi
-	 */
-	TransactionManager getTransactionManager();
+    /**
+     * Retrieves the transaction manager.
+     * 
+     * @return the transaction manager object to bind to jndi
+     */
+    TransactionManager getTransactionManager();
 
-	/**
-	 * @return the user transaction object to bind to jndi
-	 */
-	UserTransaction getUserTransaction();
+    /**
+     * Retrieves the user transaction.
+     * 
+     * @return the user transaction object to bind to jndi
+     */
+    UserTransaction getUserTransaction();
 
 }

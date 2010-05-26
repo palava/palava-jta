@@ -16,8 +16,6 @@
 
 package de.cosmocode.palava.jta;
 
-import java.io.File;
-
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
 
@@ -44,9 +42,9 @@ final class JtaLoader implements Initializable, Disposable {
 
     private JNDIContextBinder jndiContextBinder;
     private MBeanService mBeanService;
-	private JtaProvider jtaProvider;
+    private JtaProvider jtaProvider;
 
-	private String manager = JtaConfig.DEFAULT_MANAGER;
+    private String manager = JtaConfig.DEFAULT_MANAGER;
     private String user = JtaConfig.DEFAULT_USER;
 
     private final TransactionCounter counter = new TransactionCounter();
@@ -59,7 +57,7 @@ final class JtaLoader implements Initializable, Disposable {
         
         this.jndiContextBinder = jndiContextBinder;
         this.mBeanService = mBeanService;
-	    this.jtaProvider = jtaProvider;
+        this.jtaProvider = jtaProvider;
     }
 
     @Inject(optional = true)
@@ -75,7 +73,7 @@ final class JtaLoader implements Initializable, Disposable {
     @Override
     public void initialize() throws LifecycleException {
         try {
-			final TransactionManager tm = new TransactionManagerCounter(jtaProvider.getTransactionManager(), counter);
+            final TransactionManager tm = new TransactionManagerCounter(jtaProvider.getTransactionManager(), counter);
             final UserTransaction tx = new UserTransactionCounter(jtaProvider.getUserTransaction(), counter);
 
             LOG.info("Binding TransactionManager to {} [{}]", manager, tm);

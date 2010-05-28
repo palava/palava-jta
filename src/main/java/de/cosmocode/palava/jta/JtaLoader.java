@@ -16,21 +16,19 @@
 
 package de.cosmocode.palava.jta;
 
-import javax.transaction.TransactionManager;
-import javax.transaction.UserTransaction;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-
 import de.cosmocode.palava.core.lifecycle.Disposable;
 import de.cosmocode.palava.core.lifecycle.Initializable;
 import de.cosmocode.palava.core.lifecycle.LifecycleException;
 import de.cosmocode.palava.jmx.MBeanService;
-import de.cosmocode.palava.jndi.JNDIContextBinder;
+import de.cosmocode.palava.jndi.JndiContextBinderUtility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.UserTransaction;
 
 /**
  * Binds the Bitronix JTA provider as the JTA manager.
@@ -40,7 +38,7 @@ import de.cosmocode.palava.jndi.JNDIContextBinder;
 final class JtaLoader implements Initializable, Disposable {    
     private static final Logger LOG = LoggerFactory.getLogger(JtaLoader.class);
 
-    private JNDIContextBinder jndiContextBinder;
+    private JndiContextBinderUtility jndiContextBinderUtility;
     private MBeanService mBeanService;
     private JtaProvider jtaProvider;
 
@@ -51,11 +49,11 @@ final class JtaLoader implements Initializable, Disposable {
 
     @Inject
     public JtaLoader(
-        JNDIContextBinder jndiContextBinder,
+        JndiContextBinderUtility jndiContextBinderUtility,
         MBeanService mBeanService,
         JtaProvider jtaProvider) {
-        
-        this.jndiContextBinder = jndiContextBinder;
+
+        this.jndiContextBinderUtility = jndiContextBinderUtility;
         this.mBeanService = mBeanService;
         this.jtaProvider = jtaProvider;
     }
@@ -77,10 +75,10 @@ final class JtaLoader implements Initializable, Disposable {
             final UserTransaction tx = new UserTransactionCounter(jtaProvider.getUserTransaction(), counter);
 
             LOG.info("Binding TransactionManager to {} [{}]", manager, tm);
-            jndiContextBinder.bind(manager, tm, TransactionManager.class);
+            jndiContextBinderUtility.bind(manager, tm, TransactionManager.class);
 
             LOG.info("Binding UserTransaction to {} [{}]", user, tx);
-            jndiContextBinder.bind(user, tx, UserTransaction.class);
+            jndiContextBinderUtility.bind(user, tx, UserTransaction.class);
 
             mBeanService.register(counter);
 

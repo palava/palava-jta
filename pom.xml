@@ -1,63 +1,70 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+	<modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>de.cosmocode.palava</groupId>
-        <artifactId>palava-parent</artifactId>
-        <version>2.3.0</version>
-    </parent>
+	<parent>
+		<groupId>de.cosmocode.palava</groupId>
+		<artifactId>palava-parent</artifactId>
+		<version>2.3.0</version>
+	</parent>
 
-    <name>Palava JTA</name>
-    <artifactId>palava-jta</artifactId>
-    <version>1.1-SNAPSHOT</version>
+	<name>Palava JTA</name>
+	<artifactId>palava-jta</artifactId>
+	<version>1.1-SNAPSHOT</version>
 
-    <scm>
-        <developerConnection>scm:svn:https://palava.svn.cosmocode.de/palava-jta/trunk</developerConnection>
-    </scm>
+	<scm>
+		<developerConnection>scm:svn:https://palava.svn.cosmocode.de/palava-jta/trunk</developerConnection>
+	</scm>
+	<repositories>
+		<repository>
+			<id>cosmocode-public</id>
+			<name>CosmoCode Public Maven Repository</name>
+			<url>http://mvn.cosmocode.de/</url>
+		</repository>
+	</repositories>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>aspectj-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                            <goal>test-compile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>aspectj-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>compile</goal>
+							<goal>test-compile</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 
-    <dependencies>
-        <dependency>
-            <groupId>de.cosmocode.palava</groupId>
-            <artifactId>palava-core</artifactId>
-            <version>[2.1,3)</version>
-        </dependency>
-        <dependency>
-            <groupId>de.cosmocode.palava</groupId>
-            <artifactId>palava-jndi</artifactId>
-            <version>[1.0,2)</version>
-        </dependency>
-        <dependency>
-            <groupId>de.cosmocode.palava</groupId>
-            <artifactId>palava-jmx</artifactId>
-            <version>[1.2,2)</version>
-        </dependency>
-        <dependency>
-            <groupId>de.cosmocode.palava</groupId>
-            <artifactId>palava-ipc</artifactId>
-            <version>[1.0,2)</version>
-        </dependency>
-	    <dependency>
-		    <groupId>org.apache.geronimo.specs</groupId>
-		    <artifactId>geronimo-jta_1.0.1B_spec</artifactId>
-		    <version>1.0.1</version>
-	    </dependency>
-    </dependencies>
+	<dependencies>
+		<dependency>
+			<groupId>de.cosmocode.palava</groupId>
+			<artifactId>palava-core</artifactId>
+			<version>[2.1,3)</version>
+		</dependency>
+		<dependency>
+			<groupId>de.cosmocode.palava</groupId>
+			<artifactId>palava-jndi</artifactId>
+			<version>[1.0,2)</version>
+		</dependency>
+		<dependency>
+			<groupId>de.cosmocode.palava</groupId>
+			<artifactId>palava-jmx</artifactId>
+			<version>[1.2,2)</version>
+		</dependency>
+		<dependency>
+			<groupId>de.cosmocode.palava</groupId>
+			<artifactId>palava-ipc</artifactId>
+			<version>[1.0,2)</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.geronimo.specs</groupId>
+			<artifactId>geronimo-jta_1.0.1B_spec</artifactId>
+			<version>1.0.1</version>
+		</dependency>
+	</dependencies>
 </project>

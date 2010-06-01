@@ -64,7 +64,7 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
         }
 
         if (local) {
-            LOG.trace("Beginning automatic transaction {}", tx);
+            LOG.debug("Beginning automatic transaction {}", tx);
             try {
                 tx.begin();
             } catch (NotSupportedException e) {

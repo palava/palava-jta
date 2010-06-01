@@ -107,7 +107,7 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
         if (local) {
             if (status == Status.STATUS_MARKED_ROLLBACK) {
                 try {
-                    LOG.trace("Rolling back marked transaction {}", tx);
+                    LOG.debug("Rolling back marked transaction {}", tx);
                     tx.rollback();
                 } catch (SystemException e) {
                     throw new IllegalStateException(e);
@@ -115,7 +115,7 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
             } else {
                 try {
                     tx.commit();
-                    LOG.trace("Committed automatic transaction {}", tx);
+                    LOG.debug("Committed automatic transaction {}", tx);
                 } catch (Exception e) {
                     try {
                         LOG.info("Rolling back transaction {}", tx);

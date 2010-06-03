@@ -16,14 +16,9 @@
 
 package de.cosmocode.palava.jta;
 
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import javax.transaction.UserTransaction;
-
 import com.google.common.base.Preconditions;
+
+import javax.transaction.*;
 
 /**
  * Decorator for {@link UserTransaction} which counts pending, committed and rolled back
@@ -57,22 +52,20 @@ public class UserTransactionCounter extends ForwardingUserTransaction {
     }
 
     @Override
-    public void commit() throws HeuristicMixedException, HeuristicRollbackException, RollbackException, 
-        SystemException {
+    public void commit() throws SystemException, RollbackException, HeuristicRollbackException, HeuristicMixedException {
         super.commit();
         counter.getPending().decrementAndGet();
         counter.getCommitted().incrementAndGet();
     }
 
     @Override
-    public void rollback() throws IllegalStateException, SecurityException, SystemException {
+    public void rollback() throws SystemException {
         try {
             super.rollback();
             counter.getRolledbackSuccess().incrementAndGet();
-        /* CHECKSTYLE:OFF */
-        } catch (Exception e) {
-        /* CHECKSTYLE:ON */
+        } catch (SystemException e) {
             counter.getRolledbackFailed().incrementAndGet();
+            throw e;
         } finally {
             counter.getPending().decrementAndGet();
         }

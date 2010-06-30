@@ -57,7 +57,8 @@ public class UserTransactionCounter extends ForwardingUserTransaction {
     }
 
     @Override
-    public void commit() throws SystemException, RollbackException, HeuristicRollbackException, HeuristicMixedException {
+    public void commit() throws SystemException, RollbackException, 
+        HeuristicRollbackException, HeuristicMixedException {
         super.commit();
         counter.getPending().decrementAndGet();
         counter.getCommitted().incrementAndGet();

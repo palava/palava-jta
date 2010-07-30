@@ -10,10 +10,10 @@
 
 	<name>Palava JTA</name>
 	<artifactId>palava-jta</artifactId>
-	<version>1.1-SNAPSHOT</version>
+	<version>1.0.4</version>
 
 	<scm>
-		<developerConnection>scm:svn:https://palava.svn.cosmocode.de/palava-jta/trunk</developerConnection>
+		<developerConnection>scm:svn:https://palava.svn.cosmocode.de/palava-jta/tags/1.0.4</developerConnection>
 	</scm>
 	<repositories>
 		<repository>

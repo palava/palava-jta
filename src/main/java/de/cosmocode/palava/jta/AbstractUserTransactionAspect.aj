@@ -46,6 +46,7 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
     
     @SuppressAjWarnings("adviceDidNotMatch")
     Object around(): transactional() {
+        Preconditions.checkNotNull(provider, "Provider not injected yet");
         final UserTransaction tx = provider.get();
         LOG.trace("Using transaction {}", tx);
 

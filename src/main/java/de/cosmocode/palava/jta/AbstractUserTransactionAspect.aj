@@ -55,14 +55,16 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
         } catch (SystemException e) {
             throw new IllegalStateException(e);
         }
-        
+
+        int status;
         final boolean local;
-        
         try {
-            local = tx.getStatus() == Status.STATUS_NO_TRANSACTION;
+            status = tx.getStatus();
         } catch (SystemException e) {
             throw new IllegalStateException(e);
         }
+
+        local = status == Status.STATUS_NO_TRANSACTION;
 
         if (local) {
             LOG.debug("Beginning automatic transaction {}", tx);
@@ -74,12 +76,19 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
                 throw new IllegalStateException(e);
             }
         } else {
-            LOG.trace("Transaction {} already active", tx);
+            LOG.trace("Transaction {} already active (Status: {})", tx, status);
+        }
+
+        try {
+            status = tx.getStatus();
+        } catch (SystemException e) {
+            throw new IllegalStateException(e);
         }
 
         final Object returnValue;
         
         try {
+            LOG.trace("Status before execution: {}", status);
             returnValue = proceed();
         } catch (Exception e) {
             try {
@@ -97,13 +106,13 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
             throw new IllegalStateException(e);
         }
         
-        final int status;
-        
         try {
             status = tx.getStatus();
         } catch (SystemException e) {
             throw new IllegalStateException(e);
         }
+
+        LOG.trace("Status after execution: {}", status);
         
         if (local) {
             if (status == Status.STATUS_MARKED_ROLLBACK) {

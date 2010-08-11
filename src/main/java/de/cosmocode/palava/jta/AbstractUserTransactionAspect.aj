@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.gag.annotation.remark.Hack;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
@@ -124,8 +125,8 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
             } catch (Exception inner) {
                 LOG.error("Rollback failed", inner);
             }
-            // FIXME this effectively shadows the real exceptions thus preventing correct exception handling
-            //throw new IllegalStateException(e);
+            
+            // hack to support throwing checked exceptions
             return sneakyThrow(e);
         }
         
@@ -172,6 +173,7 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
         rolledback.eventTransactionRolledback(tx);
     }
     
+    @Hack("Why is this possible?")
     private RuntimeException sneakyThrow(Throwable t) {
         this.<RuntimeException>doSneakyThrow(t);
         return null;

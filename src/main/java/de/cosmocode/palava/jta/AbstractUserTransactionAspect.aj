@@ -124,6 +124,7 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
             } catch (Exception inner) {
                 LOG.error("Rollback failed", inner);
             }
+            // FIXME this effectively shadows the real exceptions thus preventing correct exception handling 
             throw new IllegalStateException(e);
         }
         

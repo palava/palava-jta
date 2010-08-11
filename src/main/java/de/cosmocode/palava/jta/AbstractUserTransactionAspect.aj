@@ -125,8 +125,8 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
                 LOG.error("Rollback failed", inner);
             }
             // FIXME this effectively shadows the real exceptions thus preventing correct exception handling
-            throw sneakyThrow(e);
             //throw new IllegalStateException(e);
+            return sneakyThrow(e);
         }
         
         try {
@@ -173,12 +173,13 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
     }
     
     private RuntimeException sneakyThrow(Throwable t) {
-        return this.<RuntimeException>doSneakyThrow(t);
+        this.<RuntimeException>doSneakyThrow(t);
+        return null;
     }
 
     @SuppressWarnings("unchecked")
     private <T extends Throwable> T doSneakyThrow(Throwable t) throws T {
-        return (T)t;
+        throw (T) t;
     }
     
 }

@@ -29,6 +29,7 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import de.cosmocode.palava.core.Registry;
 import de.cosmocode.palava.core.aop.AbstractPalavaAspect;
 
 public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspect issingleton() {
@@ -36,10 +37,28 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
     private static final Logger LOG = LoggerFactory.getLogger(AbstractUserTransactionAspect.class);
 
     private Provider<UserTransaction> provider;
+
+    private TransactionBeginEvent begin;
+    private TransactionBeganEvent began;
+    private TransactionCommitEvent commit;
+    private TransactionCommittedEvent committed;
+    private TransactionRollbackEvent rollback;
+    private TransactionRolledbackEvent rolledback;
     
     @Inject
     void setProvider(Provider<UserTransaction> provider) {
         this.provider = Preconditions.checkNotNull(provider, "Provider");
+    }
+    
+    @Inject
+    void setRegistry(Registry registry) {
+        Preconditions.checkNotNull(registry, "Registry");
+        this.begin = registry.proxy(TransactionBeginEvent.class);
+        this.began = registry.proxy(TransactionBeganEvent.class);
+        this.commit = registry.proxy(TransactionCommitEvent.class);
+        this.committed = registry.proxy(TransactionCommittedEvent.class);
+        this.rollback = registry.proxy(TransactionRollbackEvent.class);
+        this.rolledback = registry.proxy(TransactionRolledbackEvent.class);
     }
     
     protected abstract pointcut transactional();
@@ -69,7 +88,9 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
         if (local) {
             LOG.debug("Beginning automatic transaction {}", tx);
             try {
+                begin.eventTransactionBegin(tx);
                 tx.begin();
+                began.eventTransactionBegan(tx);
             } catch (NotSupportedException e) {
                 throw new IllegalStateException(e);
             } catch (SystemException e) {
@@ -95,7 +116,7 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
                 if (local && 
                     (tx.getStatus() == Status.STATUS_ACTIVE || tx.getStatus() == Status.STATUS_MARKED_ROLLBACK)) {
                     LOG.info("Rolling back local/active transaction {}", tx);
-                    tx.rollback();
+                    rollback(tx);
                 } else if (tx.getStatus() != Status.STATUS_ROLLEDBACK || tx.getStatus() != Status.STATUS_ROLLING_BACK) {
                     LOG.debug("Setting transaction {} as rollback only", tx);
                     tx.setRollbackOnly();
@@ -118,18 +139,20 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
             if (status == Status.STATUS_MARKED_ROLLBACK) {
                 try {
                     LOG.debug("Rolling back marked transaction {}", tx);
-                    tx.rollback();
+                    rollback(tx);
                 } catch (SystemException e) {
                     throw new IllegalStateException(e);
                 }
             } else {
                 try {
+                    commit.eventTransactionCommit(tx);
                     tx.commit();
+                    committed.eventTransactionCommitted(tx);
                     LOG.debug("Committed automatic transaction {}", tx);
                 } catch (Exception e) {
                     try {
                         LOG.info("Rolling back transaction {}", tx);
-                        tx.rollback();
+                        rollback(tx);
                     } catch (Exception inner) {
                         LOG.error("Rollback failed", inner);
                     }
@@ -139,6 +162,12 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
         }
         
         return returnValue;
+    }
+    
+    private void rollback(UserTransaction tx) throws SystemException {
+        rollback.eventTransactionRollback(tx);
+        tx.rollback();
+        rolledback.eventTransactionRolledback(tx);
     }
     
 }

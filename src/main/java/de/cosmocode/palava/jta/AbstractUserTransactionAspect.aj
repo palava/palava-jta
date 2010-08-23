@@ -162,6 +162,8 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
                     throw new IllegalStateException(e);
                 }
             }
+        } else {
+            LOG.trace("Not committing non-local transaction {}", tx);
         }
         
         return returnValue;
@@ -174,7 +176,7 @@ public abstract aspect AbstractUserTransactionAspect extends AbstractPalavaAspec
     }
     
     @Hack("Why is this possible?")
-    private RuntimeException sneakyThrow(Throwable t) {
+    private Object sneakyThrow(Throwable t) {
         this.<RuntimeException>doSneakyThrow(t);
         return null;
     }
